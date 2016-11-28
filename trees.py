@@ -37,7 +37,26 @@ class Tree:
         elif data > node.data:
             node.right = self.insert(node.right, data)
         return node
+    
+    def insertLeft(self , node , data): 
+        if node is None:
+            return self.createNode(data)
+        if node.left == None:
+            node.left = self.insertLeft(node.left, data)
 
+    def insertRight(self , node , data):
+        if node is None:
+            return self.createNode(data)
+        if node.right == None:
+            node.right = self.insertRight(node.right, data)
+
+    def beta_redux_present(self, node):
+        if node is not None:
+            if node.data == "@" and node.left.data == "Lamda":
+                return True
+            self.beta_redux_present(node.left)
+            self.beta_redux_present(node.right) 
+        return False
 
     def search(self, node, data):
         if node is None or node.data == data:

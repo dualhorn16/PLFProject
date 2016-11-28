@@ -16,27 +16,33 @@ from trees import Tree
 
 
 def main():
-    root = None
+    
+    print "\n"
     tree = Tree()
-    root = tree.insert(root, 10)
+    root = None
+    root = tree.insert(root, "@")
     print root
-    tree.insert(root, 20)
-    tree.insert(root, 30)
-    tree.insert(root, 40)
-    tree.insert(root, 70)
-    tree.insert(root, 60)
-    tree.insert(root, 80)
+    tree.insertLeft(root, "Lamda")
+    tree.insertRight(root, "y")
+    tree.insertLeft(root.left, "x")
+    tree.insertRight(root.left, "x")
 
+    print "\n"
     print "Traverse Inorder"
     tree.traverseInorder(root)
+    print tree.beta_redux_present(root)
 
-    print "Traverse Preorder"
-    tree.traversePreorder(root)
+    root = None
+    tree = Tree()
+    root = tree.insert(root, "Lamda")
+    tree.insertLeft(root, "x")
+    tree.insertRight(root, "x")
+    print "\n"
+    print "Traverse Inorder"
+    tree.traverseInorder(root)
+    print tree.beta_redux_present(root)
 
-    print "Traverse Postorder"
-    tree.traversePostorder(root)
 
-    tree.search()
 
 if __name__ == "__main__":
     main()
