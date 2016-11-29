@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import codecs
 
@@ -59,19 +60,16 @@ class Parser(object):
         print('########################################')
         print(self.raw_string)
         print('########################################')
-        self.lexical_analysis()
+        self.lexical_analyzer()
 
     def parse_string(self, input_string):
         '''
         Parses the given string.
         '''
         self.raw_string = input_string
-        print('########################################')
-        print(self.raw_string)
-        print('########################################')
-        self.lexical_analysis()
+        self.lexical_analyzer()
 
-    def lexical_analysis(self):
+    def lexical_analyzer(self):
         '''
         Lexically analyzes the string. Fills in the class array, lexemes, with Lexeme objects.
         '''
