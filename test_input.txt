@@ -1,4 +1,1 @@
-(λx.x)(λx.x x x x)
-
-
-            yesterday
+(λx.x)(λx.\y.x y y x)

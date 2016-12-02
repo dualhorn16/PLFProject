@@ -42,7 +42,7 @@ class Parser(object):
     '''
     Parsing structure for the project. Includes lexical analyzer.
     Rules:
-        - only recognizes following punctuation: λ . ( )
+        - only recognizes following punctuation: λ \ . ( )
         - variable names must contain only alphabetical characters
     '''
     raw_string = ''
@@ -52,15 +52,18 @@ class Parser(object):
         '''
         Parses the text inside the given file.
         '''
-        # open file and get text
-        with codecs.open(filename, encoding='utf-8', mode='r') as input_file:
+        try:
+            input_file = codecs.open(filename, encoding='utf-8', mode='r')
+        except IOError:
+            print('cannot open file: ', filename)
+        else:
             self.raw_string = input_file.read()
-        input_file.closed
-        print('parsing: ' + filename)
-        print('########################################')
-        print(self.raw_string)
-        print('########################################')
-        self.lexical_analyzer()
+            input_file.close()
+            print('parsing: ' + filename)
+            print('########################################')
+            print(self.raw_string)
+            print('########################################')
+            self.lexical_analyzer()
 
     def parse_string(self, input_string):
         '''
@@ -86,7 +89,7 @@ class Parser(object):
                     break
                 cur_char = cur_char + 1
             # lamda case
-            if self.raw_string[cur_char] == unichr(955):
+            if self.raw_string[cur_char] == unichr(955) or self.raw_string[cur_char] == '\\':
                 new_lexeme = Lexeme(LexemeTypes.LAMDA, 0)
                 self.lexemes.append(new_lexeme)
             # period case
@@ -103,27 +106,11 @@ class Parser(object):
                 self.lexemes.append(new_lexeme)
             # identifier case
             elif self.raw_string[cur_char].isalpha():
-                ident = ''
-                # iterate through characters to get entire identifier
-                while True:
-                    # EOF
-                    if cur_char >= len(self.raw_string):
-                        new_lexeme = Lexeme(LexemeTypes.IDENTIFIER, ident)
-                        self.lexemes.append(new_lexeme)
-                        return
-                    elif self.raw_string[cur_char].isalpha():
-                        ident = ident + self.raw_string[cur_char]
-                    # non-identifier character
-                    else:
-                        new_lexeme = Lexeme(LexemeTypes.IDENTIFIER, ident)
-                        self.lexemes.append(new_lexeme)
-                        cur_char = cur_char - 1
-                        break
-                    cur_char = cur_char + 1
+                new_lexeme = Lexeme(LexemeTypes.IDENTIFIER, self.raw_string[cur_char])
+                self.lexemes.append(new_lexeme)
             # other character is an error
             else:
                 print('ERROR: unrecognized character: ' + self.raw_string[cur_char])
-                exit(1)
             # increment counter
             cur_char = cur_char + 1
 
@@ -137,3 +124,9 @@ class Parser(object):
                 print(': ' + self.lexemes[i].value)
             else:
                 print(LexemeTypes.to_string(self.lexemes[i].lex_type))
+
+    def clear_lexemes(self):
+        '''
+        Re-initialize lexemes container to clear it
+        '''
+        self.lexemes = []
