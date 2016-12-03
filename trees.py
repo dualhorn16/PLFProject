@@ -21,6 +21,22 @@ class Node:
         self.data = value
         self.right = None
 
+    def __str__(self, depth=0):
+        ret = ""
+
+        # Print right branch
+        if self.right != None:
+            ret += self.right.__str__(depth + 1)
+
+        # Print own value
+        ret += "\n" + ("       "*depth) + str(self.data)
+
+        # Print left branch
+        if self.left != None:
+            ret += self.left.__str__(depth + 1)
+
+        return ret
+
 
 #A generic representation of a tree to use after parsing Lamda Calc Expression.
 class Tree:
@@ -84,7 +100,6 @@ class Tree:
             if node.data == "@" and node.left.data == "Lamda":
                 identifier = node.left.left.data
                 arguement = copy.deepcopy(node.right)
-                self.traverseInorder(arguement)
                 node = self.replacement(node.left.right, identifier, arguement)
             else:
                 node.left = self.perform_beta_redux(node.left)

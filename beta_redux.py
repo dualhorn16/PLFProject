@@ -31,13 +31,15 @@ def main():
 
     print "\n"
     print "Traverse Inorder BEFORE:"
-    tree.traverseInorder(root)
+    print root
+    #tree.traverseInorder(root)
     if tree.beta_redux_present(root, False):
         root = tree.perform_beta_redux(root)
     else:
         print "no beta redux present"
     print "\nTraverse Inorder AFTER:"
-    tree.traverseInorder(root)
+    print root
+    #tree.traverseInorder(root)
     print "++++++++++++++++++++++\n\n"
 
 
@@ -64,14 +66,16 @@ def main():
 
 
     print "\nBEFORE:"
-    tree.traverseInorder(root)
+    print root
+    #tree.traverseInorder(root)
     
     while(1):
         if tree.beta_redux_present(root, False):
             #print "\n\nHere... we ... go!\n\n"
             root = tree.perform_beta_redux(root)
             print "\nAFTER an Iteration:"
-            tree.traverseInorder(root)
+            #tree.traverseInorder(root)
+            print root
             #print "WE FOUND ONE!"
             
         else:
