@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #************************************************
 #	Lamda Calculus Beta Redux Calculator
 #	
@@ -76,7 +77,7 @@ class Tree:
     def beta_redux_present(self, node, prev_value):
         return_value = prev_value
         if node is not None:
-            if node.data == "@" and node.left.data == "Lamda":
+            if node.data == "@" and node.left.data == "λ":
                 return_value = True
             return_value = self.beta_redux_present(node.left, return_value)
             return_value = self.beta_redux_present(node.right, return_value) 
@@ -97,7 +98,7 @@ class Tree:
     #...performs it and then returns what should be returned given its location.
     def perform_beta_redux(self, node):
         if node is not None:
-            if node.data == "@" and node.left.data == "Lamda":
+            if node.data == "@" and node.left.data == "λ":
                 identifier = node.left.left.data
                 arguement = copy.deepcopy(node.right)
                 node = self.replacement(node.left.right, identifier, arguement)
@@ -106,6 +107,13 @@ class Tree:
                 node.right = self.perform_beta_redux(node.right)
 
         return node
+
+
+    def height(self, root):
+        if root is None:
+            return 0
+        else:
+            return max(self.height(root.left), self.height(root.right)) + 1
 
     #These are just tree printing functions.  Not pretty, but helps to see whats going on.
     #A better method of illustrating a tree after a given iteration should prolly be looked at.
@@ -126,3 +134,39 @@ class Tree:
             self.traversePreorder(root.left)
             self.traversePreorder(root.right)
             print root.data
+
+    def printNice(self, rootnode, height):
+        thislevel = [rootnode]
+        level = 1
+        a = "                "
+        a2 = "================"
+        while thislevel:
+            nextlevel = list()
+            nextlevel2 = list()
+            a = a[:len(a)/2]
+            for n in thislevel:
+                if level is 1:
+                    print a[:len(a)-1]+n.data,
+                else:
+                    print a+n.data,
+                if n.left: nextlevel.append(n.left),nextlevel2.append("/") 
+                if not n.left and level < height: nextlevel.append(Node(a[:(len(a)/4)])),nextlevel2.append(a[:(len(a)/4)])
+                if n.right: nextlevel.append(n.right),nextlevel2.append("\\")
+                if not n.right and level < height: nextlevel.append(Node(a[:(len(a)/4)])),nextlevel2.append(a[:(len(a)/4)])
+            print
+            for m in nextlevel2:
+                if m is "/":
+                    print a[:(len(a)/2)] + m,
+                elif m is "\\":
+                    print a[:(len(a)/2)-1] + m,
+                else:
+                    print a[:(len(a)/2)] + m,
+            print
+            level=level+1
+            thislevel = nextlevel
+
+
+
+
+
+
