@@ -28,9 +28,9 @@ def main():
     tree.insertLeft(root.left, "x")
     tree.insertRight(root.left, "x")
     #tree created... now doing something meaningful.
-    print "TREE MANUALLY ENTERED: (lamda x.x)y"
+    print "TREE MANUALLY ENTERED: (λx.x)y"
     print "\n"
-    print "Traverse Inorder BEFORE:"
+    print "BEFORE:"
     #print root
     tree.printNice(root, tree.height(root))
     #tree.traverseInorder(root)
@@ -38,7 +38,7 @@ def main():
         root = tree.perform_beta_redux(root)
     else:
         print "no beta redux present"
-    print "\nTraverse Inorder AFTER:"
+    print "\nAFTER an Iteration:"
     #print root
     tree.printNice(root, tree.height(root))
     #tree.traverseInorder(root)
@@ -94,6 +94,44 @@ def main():
     print "++++++++++++++++++++++\n\n"
     #tree.printNice(root, tree.height(root))
     #print "\nHeight: ",tree.height(root)
+
+    root = None
+    tree = Tree()
+    root = tree.insert(root,"@")
+    root.left = Node("λ")
+    root.right = Node("@")
+    root.left.left = Node("x")
+    root.left.right = Node("+")
+    root.left.right.left = Node("x")
+    root.left.right.right = Node("1")
+    root.right.left = Node("λ")
+    root.right.right = Node("3")
+    root.right.left.left = Node("y")
+    root.right.left.right = Node("+")
+    root.right.left.right.left = Node("y")
+    root.right.left.right.right = Node("2")
+    print "TREE MANUALLY ENTERED: (λx.x+1)((λy.y+2)3)"
+
+    print "\nBEFORE:"
+    tree.printNice(root, tree.height(root))
+    print "----------------------------"
+    while(1):
+        if tree.beta_redux_present(root, False):
+            #print "\n\nHere... we ... go!\n\n"
+            root = tree.perform_beta_redux(root)
+            print "\nAFTER an Iteration:"
+            #tree.traverseInorder(root)
+            tree.printNice(root, tree.height(root))
+            #print root
+            print "----------------------------"
+            #print "WE FOUND ONE!"
+            
+        else:
+            print "No more beta reductions present. Exiting...."
+            break
+
+    print "++++++++++++++++++++++\n\n"
+
 
 
 if __name__ == "__main__":
