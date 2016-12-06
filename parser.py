@@ -13,7 +13,7 @@ class LexemeTypes(object):
     IDENTIFIER = 5
 
     @staticmethod
-    def toString(lex_type):
+    def to_string(lex_type):
         '''
         Returns a string for the provided lexeme type.
         '''
@@ -39,12 +39,15 @@ class Lexeme(object):
         self.value = value
 
 class NodeTypes(object):
+    '''
+    NodeTypes acts as enumerator for the 3 different kinds of nodes.
+    '''
     ABSTRACTION = 1
     APPLICATION = 2
     VARIABLE = 3
 
     @staticmethod
-    def toString(node_type):
+    def to_string(node_type):
         '''
         Returns a string for the provided node type.
         '''
@@ -56,26 +59,31 @@ class NodeTypes(object):
             return 'variable'
 
 class Node(object):
+    '''
+    Object for parse tree.
+    '''
     left = None
     right = None
-    type = None
+    parent = None
+    node_type = None
     value = 0
 
-    def __init__(self, type):
-        self.type = type
+    def __init__(self, node_type):
+        self.node_type = node_type
 
 
 class Parser(object):
     '''
     Parsing structure for the project. Includes lexical analyzer.
     Rules:
-        - only recognizes following punctuation: λ \ . ( )
+        - only recognizes following punctuation: λ \\ . ( )
         - variable names must contain only alphabetical characters
     '''
     raw_string = ''
     lexemes = []
+    root = 0
 
-    def parseFile(self, filename):
+    def parse_file(self, filename):
         '''
         Parses the text inside the given file.
         '''
@@ -83,6 +91,7 @@ class Parser(object):
             input_file = codecs.open(filename, encoding='utf-8', mode='r')
         except IOError:
             print('cannot open file: ', filename)
+            exit(1)
         else:
             self.raw_string = input_file.read()
             input_file.close()
@@ -90,16 +99,16 @@ class Parser(object):
             print('########################################')
             print(self.raw_string)
             print('########################################')
-            self.lexicalAnalyzer()
+            self.lexical_analyzer()
 
-    def parseString(self, input_string):
+    def parse_string(self, input_string):
         '''
         Parses the given string.
         '''
         self.raw_string = input_string
-        self.lexicalAnalyzer()
+        self.lexical_analyzer()
 
-    def lexicalAnalyzer(self):
+    def lexical_analyzer(self):
         '''
         Lexically analyzes the string. Fills in the class array, lexemes, with Lexeme objects.
         '''
@@ -141,21 +150,56 @@ class Parser(object):
             # increment counter
             cur_char = cur_char + 1
 
-    def createParseTree(self):
-        print('creating parse treee')
+    def create_parse_tree(self):
+        '''
+        Initiates the creation of parse tree.
+        '''
+        self.root = self.parse_expression(self.lexemes)
 
-    def printLexemes(self):
+    def parse_expression(self, expression):
+        '''
+        Recursively parses an expression. Takes array of lexemes. Returns root node.
+        '''
+        # iterate through lexemes
+        cur_lex = 0
+        root = 0
+        # If abstraction
+        if expression[cur_lex].lex_type == LexemeTypes.LAMDA:
+            # Set node to lamda
+            root = Node(NodeTypes.ABSTRACTION)
+            cur_lex += 1
+            # put variable as left child
+            root.left = Node(NodeTypes.VARIABLE)
+            root.left.value = expression[cur_lex]
+            cur_lex += 1
+            # skip period
+            cur_lex += 1
+            # put the rest as right child
+            root.right = self.parse_expression(expression[2:])
+        # If variable
+        elif expression[cur_lex].lex_type == LexemeTypes.IDENTIFIER:
+            root = Node(NodeTypes.VARIABLE)
+            root.value = expression[cur_lex]
+        return root
+
+    def print_lexemes(self):
         '''
         Prints the list of lexemes
         '''
         for i in range(0, len(self.lexemes)):
             if self.lexemes[i].lex_type == LexemeTypes.IDENTIFIER:
-                print(LexemeTypes.toString(self.lexemes[i].lex_type), end='')
+                print(LexemeTypes.to_string(self.lexemes[i].lex_type), end='')
                 print(': ' + self.lexemes[i].value)
             else:
-                print(LexemeTypes.toString(self.lexemes[i].lex_type))
+                print(LexemeTypes.to_string(self.lexemes[i].lex_type))
 
-    def clearLexemes(self):
+    def print_tree(self):
+        '''
+        Prints the parse tree
+        '''
+        
+
+    def clear_lexemes(self):
         '''
         Re-initialize lexemes container to clear it
         '''
