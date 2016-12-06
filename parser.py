@@ -13,7 +13,7 @@ class LexemeTypes(object):
     IDENTIFIER = 5
 
     @staticmethod
-    def to_string(lex_type):
+    def toString(lex_type):
         '''
         Returns a string for the provided lexeme type.
         '''
@@ -38,6 +38,33 @@ class Lexeme(object):
         self.lex_type = lex_type
         self.value = value
 
+class NodeTypes(object):
+    ABSTRACTION = 1
+    APPLICATION = 2
+    VARIABLE = 3
+
+    @staticmethod
+    def toString(node_type):
+        '''
+        Returns a string for the provided node type.
+        '''
+        if node_type == NodeTypes.ABSTRACTION:
+            return 'abstraction'
+        elif node_type == NodeTypes.APPLICATION:
+            return 'application'
+        else:
+            return 'variable'
+
+class Node(object):
+    left = None
+    right = None
+    type = None
+    value = 0
+
+    def __init__(self, type):
+        self.type = type
+
+
 class Parser(object):
     '''
     Parsing structure for the project. Includes lexical analyzer.
@@ -48,7 +75,7 @@ class Parser(object):
     raw_string = ''
     lexemes = []
 
-    def parse_file(self, filename):
+    def parseFile(self, filename):
         '''
         Parses the text inside the given file.
         '''
@@ -63,16 +90,16 @@ class Parser(object):
             print('########################################')
             print(self.raw_string)
             print('########################################')
-            self.lexical_analyzer()
+            self.lexicalAnalyzer()
 
-    def parse_string(self, input_string):
+    def parseString(self, input_string):
         '''
         Parses the given string.
         '''
         self.raw_string = input_string
-        self.lexical_analyzer()
+        self.lexicalAnalyzer()
 
-    def lexical_analyzer(self):
+    def lexicalAnalyzer(self):
         '''
         Lexically analyzes the string. Fills in the class array, lexemes, with Lexeme objects.
         '''
@@ -114,18 +141,21 @@ class Parser(object):
             # increment counter
             cur_char = cur_char + 1
 
-    def print_lexemes(self):
+    def createParseTree(self):
+        print('creating parse treee')
+
+    def printLexemes(self):
         '''
         Prints the list of lexemes
         '''
         for i in range(0, len(self.lexemes)):
             if self.lexemes[i].lex_type == LexemeTypes.IDENTIFIER:
-                print(LexemeTypes.to_string(self.lexemes[i].lex_type), end='')
+                print(LexemeTypes.toString(self.lexemes[i].lex_type), end='')
                 print(': ' + self.lexemes[i].value)
             else:
-                print(LexemeTypes.to_string(self.lexemes[i].lex_type))
+                print(LexemeTypes.toString(self.lexemes[i].lex_type))
 
-    def clear_lexemes(self):
+    def clearLexemes(self):
         '''
         Re-initialize lexemes container to clear it
         '''

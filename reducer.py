@@ -8,8 +8,8 @@ def main():
         interactiveMode()
     elif len(sys.argv) == 2:            # read expression from file
         parser = Parser()
-        parser.parse_file(sys.argv[1])
-        parser.print_lexemes()
+        parser.parseFile(sys.argv[1])
+        parser.printLexemes()
     else:                               # error
         print('usage: reducer.py')
         print('       reducer.py source_file')
@@ -24,9 +24,9 @@ def interactiveMode():
             print('-- enter \'exit\' to quit')
             print('-- lamda symbols can be either λ or \\')
         else:
-            parser.parse_string(new_line)
-            parser.print_lexemes()
-        parser.clear_lexemes()
+            parser.parseString(new_line)
+            parser.printLexemes()
+        parser.clearLexemes()
 
 if __name__ == '__main__':
     main()
