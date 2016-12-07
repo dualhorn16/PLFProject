@@ -12,31 +12,31 @@ class LexemeTypes(object):
     RIGHT_PAREN = 4
     IDENTIFIER = 5
 
-    @staticmethod
-    def to_string(lex_type):
-        '''
-        Returns a string for the provided lexeme type.
-        '''
-        if lex_type == LexemeTypes.LAMDA:
-            return 'lamda'
-        elif lex_type == LexemeTypes.PERIOD:
-            return 'period'
-        elif lex_type == LexemeTypes.LEFT_PAREN:
-            return 'left parenthesis'
-        elif lex_type == LexemeTypes.RIGHT_PAREN:
-            return 'right parenthesis'
-        else:
-            return 'identifier'
-
 class Lexeme(object):
     '''
     Simple object for lexical analyzer.
     '''
     lex_type = 0
     value = 0
+
     def __init__(self, lex_type, value):
         self.lex_type = lex_type
         self.value = value
+
+    def to_string(self):
+        '''
+        Returns a string for this lexeme.
+        '''
+        if self.lex_type == LexemeTypes.LAMDA:
+            return 'λ'
+        elif self.lex_type == LexemeTypes.PERIOD:
+            return '.'
+        elif self.lex_type == LexemeTypes.LEFT_PAREN:
+            return '('
+        elif self.lex_type == LexemeTypes.RIGHT_PAREN:
+            return ')'
+        else:
+            return self.value
 
 class NodeTypes(object):
     '''
@@ -94,11 +94,8 @@ class Parser(object):
         else:
             self.raw_string = input_file.read()
             input_file.close()
-            print('parsing: ' + filename)
-            print('########################################')
-            print(self.raw_string)
-            print('########################################')
             self.lexical_analyzer()
+            self.print_lexemes()
 
     def parse_string(self, input_string):
         '''
@@ -189,11 +186,8 @@ class Parser(object):
         Prints the list of lexemes
         '''
         for i in range(0, len(self.lexemes)):
-            if self.lexemes[i].lex_type == LexemeTypes.IDENTIFIER:
-                print(LexemeTypes.to_string(self.lexemes[i].lex_type), end='')
-                print(': ' + self.lexemes[i].value)
-            else:
-                print(LexemeTypes.to_string(self.lexemes[i].lex_type))
+            print(self.lexemes[i].to_string(), end='')
+        print()
 
     def print_tree(self, filename):
         '''

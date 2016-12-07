@@ -27,8 +27,6 @@ def interactive_mode():
     parser = Parser()
     while True:
         new_line = raw_input('>> ')
-        print(new_line)
-        print(new_line[0:6])
         if new_line == 'exit':
             break
         elif new_line == 'help':
@@ -47,6 +45,7 @@ def interactive_mode():
         else:
             parser.clear_lexemes()
             parser.parse_string(new_line)
+            parser.print_lexemes()
             parser.create_parse_tree()
 
 if __name__ == '__main__':
