@@ -4,31 +4,50 @@ import sys
 from parser import Parser
 
 def main():
+    '''
+    Main function
+    '''
     if len(sys.argv) == 1:              # interavtive mode
-        interactiveMode()
-    elif len(sys.argv) == 2:            # read expression from file
-        parser = Parser()
-        parser.parse_file(sys.argv[1])
-        parser.print_lexemes()
-        parser.create_parse_tree()
-    else:                               # error
+        interactive_mode()
+    elif len(sys.argv) > 3:             # error
         print('usage: reducer.py')
         print('       reducer.py source_file')
+        print('       reducer.py source_file output_tex_file')
+    else:
+        parser = Parser()               # read expression from file
+        parser.parse_file(sys.argv[1])
+        parser.create_parse_tree()
+        if len(sys.argv) == 3:          # read expression from file
+            parser.print_tree(sys.argv[2])
 
-def interactiveMode():
+def interactive_mode():
+    '''
+    Interactive mode
+    '''
     parser = Parser()
     while True:
         new_line = raw_input('>> ')
+        print(new_line)
+        print(new_line[0:6])
         if new_line == 'exit':
             break
         elif new_line == 'help':
-            print('-- enter \'exit\' to quit')
-            print('-- lamda symbols can be either λ or \\')
+            print('- commands:')
+            print('-- \'reduce\'                    see reduction steps')
+            print('-- \'output [file_name].tex\'    create ouput latex file (must have qtree.sty)')
+            print('-- \'exit\'                      quit')
+            print('- lamda symbols can be either λ or \\')
+        elif new_line == 'reduce':
+            print('reduce')
+        elif new_line[0:6] == 'output':
+            if len(parser.lexemes) == 0:
+                print('Error: no expression entered')
+            else:
+                parser.print_tree(new_line[7:])
         else:
+            parser.clear_lexemes()
             parser.parse_string(new_line)
-            parser.print_lexemes()
             parser.create_parse_tree()
-        parser.clear_lexemes()
 
 if __name__ == '__main__':
     main()

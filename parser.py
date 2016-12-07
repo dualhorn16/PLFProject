@@ -46,18 +46,6 @@ class NodeTypes(object):
     APPLICATION = 2
     VARIABLE = 3
 
-    @staticmethod
-    def to_string(node_type):
-        '''
-        Returns a string for the provided node type.
-        '''
-        if node_type == NodeTypes.ABSTRACTION:
-            return 'abstraction'
-        elif node_type == NodeTypes.APPLICATION:
-            return 'application'
-        else:
-            return 'variable'
-
 class Node(object):
     '''
     Object for parse tree.
@@ -70,6 +58,17 @@ class Node(object):
 
     def __init__(self, node_type):
         self.node_type = node_type
+
+    def to_string(self):
+        '''
+        Returns a string for the provided node
+        '''
+        if self.node_type == NodeTypes.ABSTRACTION:
+            return u'λ'
+        elif self.node_type == NodeTypes.APPLICATION:
+            return '@'
+        else:
+            return self.value
 
 
 class Parser(object):
@@ -90,7 +89,7 @@ class Parser(object):
         try:
             input_file = codecs.open(filename, encoding='utf-8', mode='r')
         except IOError:
-            print('cannot open file: ', filename)
+            print('cannot open file:', filename)
             exit(1)
         else:
             self.raw_string = input_file.read()
@@ -170,16 +169,19 @@ class Parser(object):
             cur_lex += 1
             # put variable as left child
             root.left = Node(NodeTypes.VARIABLE)
-            root.left.value = expression[cur_lex]
+            root.left.value = expression[cur_lex].value
             cur_lex += 1
-            # skip period
             cur_lex += 1
             # put the rest as right child
-            root.right = self.parse_expression(expression[2:])
+            root.right = self.parse_expression(expression[cur_lex:])
         # If variable
         elif expression[cur_lex].lex_type == LexemeTypes.IDENTIFIER:
-            root = Node(NodeTypes.VARIABLE)
-            root.value = expression[cur_lex]
+            root = Node(NodeTypes.APPLICATION)
+            root.left = Node(NodeTypes.VARIABLE)
+            root.left.value = expression[cur_lex].value
+            cur_lex += 1
+            root.right = Node(NodeTypes.VARIABLE)
+            root.right.value = expression[cur_lex].value
         return root
 
     def print_lexemes(self):
@@ -193,11 +195,47 @@ class Parser(object):
             else:
                 print(LexemeTypes.to_string(self.lexemes[i].lex_type))
 
-    def print_tree(self):
+    def print_tree(self, filename):
         '''
-        Prints the parse tree
+        Prints the parse tree using LaTex and QTree
         '''
-        
+        try:
+            output_file = codecs.open(filename, encoding='utf-8', mode='w')
+        except IOError:
+            print('cannot write to file:', filename)
+            return
+        # begin file with headers
+        output_file.write('\\documentclass[utf8]{article}\n')
+        output_file.write('\\usepackage{qtree}\n')
+        output_file.write('\\begin{document}\n\n')
+        output_file.write('\\Tree ')
+        # Traverse tree here
+        self.print_tree_rec(output_file, self.root)
+        # complete file
+        output_file.write('\n\n\\end{document}\n')
+        output_file.close()
+
+    def print_tree_rec(self, output_file, node):
+        '''
+        Recursive function for print_tree()
+        '''
+        # A node has either 0 or 2 children. If 0, just output it's value (it must be a variable)
+        if node.left is None:
+            output_file.write(node.to_string())
+        # If node has children, need to use brackets and period, and recurse
+        else:
+            output_file.write('[')
+            output_file.write('.')
+            if node.node_type == NodeTypes.ABSTRACTION:
+                output_file.write('$\\lambda$')
+            else:
+                output_file.write(node.to_string())
+            output_file.write(' ')
+            self.print_tree_rec(output_file, node.left)
+            output_file.write(' ')
+            self.print_tree_rec(output_file, node.right)
+            output_file.write(' ')
+            output_file.write(']')
 
     def clear_lexemes(self):
         '''
