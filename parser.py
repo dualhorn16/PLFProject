@@ -81,6 +81,7 @@ class Parser(object):
     raw_string = ''
     lexemes = []
     root = 0
+    errors = 0
 
     def parse_file(self, filename):
         '''
@@ -94,15 +95,28 @@ class Parser(object):
         else:
             self.raw_string = input_file.read()
             input_file.close()
-            self.lexical_analyzer()
-            self.print_lexemes()
+            self.parse()
 
     def parse_string(self, input_string):
         '''
         Parses the given string.
         '''
         self.raw_string = input_string
+        self.parse()
+
+    def parse(self):
+        '''
+        Function used by both input methods. By end, lexemes are fully defined.
+        '''
+        # get tokens
         self.lexical_analyzer()
+        # check for syntax errors
+        self.errors = 0
+        self.check_syntax_errors()
+        if len(self.lexemes) == 0:
+            return
+        # add missing parentheses to lexemes
+        # self.add_parentheses()
 
     def lexical_analyzer(self):
         '''
@@ -142,49 +156,151 @@ class Parser(object):
                 self.lexemes.append(new_lexeme)
             # other character is an error
             else:
-                print('ERROR: unrecognized character: ' + self.raw_string[cur_char])
+                self.print_syntax_error(cur_char, 1, 'unrecognized character')
+                self.clear_lexemes()
+                break
             # increment counter
             cur_char = cur_char + 1
+
+    def check_syntax_errors(self):
+        '''
+        Checks for syntax errors in input
+        '''
+        print('checking syntax errors')
+        cur_lex = 0
+        while cur_lex < len(self.lexemes):
+            # check for out of place period
+            if self.lexemes[cur_lex].lex_type == LexemeTypes.PERIOD:
+                self.print_syntax_error(cur_lex, 1, 'period out of place')
+            # check for compromised abstraction declaraition
+            elif self.lexemes[cur_lex].lex_type == LexemeTypes.LAMDA:
+                # check for EOF
+                if cur_lex + 3 >= len(self.lexemes):
+                    self.print_syntax_error(cur_lex, 4, 'function definition incomplete')
+                    break
+                # check for variable
+                cur_lex += 1
+                if self.lexemes[cur_lex].lex_type != LexemeTypes.IDENTIFIER:
+                    self.print_syntax_error(cur_lex, 1, 'missing variable after lamda')
+                # check for period
+                cur_lex += 1
+                if self.lexemes[cur_lex].lex_type != LexemeTypes.PERIOD:
+                    self.print_syntax_error(cur_lex, 1, 'missing period after lamda')
+            cur_lex += 1
+        # todo: check parnetheses
+        num = 0
+        for i in range(0, len(self.lexemes)):
+            if self.lexemes[i].lex_type == LexemeTypes.LEFT_PAREN:
+                num += 1
+            elif self.lexemes[i].lex_type == LexemeTypes.RIGHT_PAREN:
+                num -= 1
+        if num != 0:
+            print('ERROR: missing at least 1 parenthesis')
+            self.clear_lexemes()
+        # if there errors present, clear lexemes. this is relied on in parse()
+        if self.errors > 0:
+            self.clear_lexemes()
+            if self.errors > 10:
+                print((self.errors - 10), 'additional errors\n')
+
+    def print_syntax_error(self, position, length, message):
+        '''
+        Prints error showing location of problem
+        '''
+        self.errors += 1
+        if self.errors <= 10:
+            # print input
+            print('ERROR: ' + message + ':')
+            print('\t' + self.raw_string)
+            # define error message and print it
+            error_pos = ' ' * position
+            for i in range(position, position + length):
+                error_pos += '^'
+            print('\t' + error_pos)
+
+    def add_parentheses(self):
+        '''
+        Fully parentheses the expressions
+        '''
+        print('adding parentheses')
+        # if parenthesis is missing at beginning, add
+        if self.lexemes[0] != '(':
+            print('( here')
+
+    def add_parentheses_rec(self, position):
+        '''
+        Recursive function for add_parentheses()
+        '''
+        # if
+        print('parentheses recurse')
+
 
     def create_parse_tree(self):
         '''
         Initiates the creation of parse tree.
         '''
-        self.root = self.parse_expression(self.lexemes)
+        # create tree
+        # self.root = self.parse_expression(self.lexemes, None)
 
-    def parse_expression(self, expression):
+    def parse_expression(self, expression, parent):
         '''
         Recursively parses an expression. Takes array of lexemes. Returns root node.
         '''
         # iterate through lexemes
         cur_lex = 0
-        root = 0
+        node = 0
         # If abstraction
         if expression[cur_lex].lex_type == LexemeTypes.LAMDA:
             # Set node to lamda
-            root = Node(NodeTypes.ABSTRACTION)
+            node = Node(NodeTypes.ABSTRACTION)
+            node.parent = parent
             cur_lex += 1
             # put variable as left child
-            root.left = Node(NodeTypes.VARIABLE)
-            root.left.value = expression[cur_lex].value
+            node.left = Node(NodeTypes.VARIABLE)
+            node.left.value = expression[cur_lex].value
+            node.left.parent = node
             cur_lex += 1
+            # Skip period
             cur_lex += 1
             # put the rest as right child
-            root.right = self.parse_expression(expression[cur_lex:])
+            node.right = self.parse_expression(expression[cur_lex:], node)
         # If variable
         elif expression[cur_lex].lex_type == LexemeTypes.IDENTIFIER:
-            root = Node(NodeTypes.APPLICATION)
-            root.left = Node(NodeTypes.VARIABLE)
-            root.left.value = expression[cur_lex].value
-            cur_lex += 1
-            root.right = Node(NodeTypes.VARIABLE)
-            root.right.value = expression[cur_lex].value
-        return root
+            # if parent is a variable, then add an application
+            if parent.node_type == NodeTypes.VARIABLE:
+                # switch new application node with parent
+                node = Node(NodeTypes.APPLICATION)
+                node.left = parent
+                node.parent = parent.parent
+                parent.parent = node
+                # set new variable as right
+                node.right = Node(NodeTypes.VARIABLE)
+                node.right.value = expression[cur_lex].value
+                node.right.parent = node
+                cur_lex += 1
+            # else it is  just a variable
+            else:
+                node = Node(NodeTypes.VARIABLE)
+                node.value = expression[cur_lex].value
+                node.parent = parent
+                cur_lex += 1
+            # node = Node(NodeTypes.APPLICATION)
+            # node.parent = parent
+            # node.left = Node(NodeTypes.VARIABLE)
+            # node.left.value = expression[cur_lex].value
+            # node.left.parent = node
+            # cur_lex += 1
+            # node.right = Node(NodeTypes.VARIABLE)
+            # node.right.value = expression[cur_lex].value
+            # node.right.parent = node
+        return node
 
     def print_lexemes(self):
         '''
         Prints the list of lexemes
         '''
+        if len(self.lexemes) == 0:
+            return
         for i in range(0, len(self.lexemes)):
             print(self.lexemes[i].to_string(), end='')
         print()

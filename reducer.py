@@ -11,13 +11,14 @@ def main():
         interactive_mode()
     elif len(sys.argv) > 3:             # error
         print('usage: reducer.py')
-        print('       reducer.py source_file')
-        print('       reducer.py source_file output_tex_file')
+        print('       reducer.py [source_file]')
+        print('       reducer.py [source_file] [output_tex_file]')
     else:
         parser = Parser()               # read expression from file
         parser.parse_file(sys.argv[1])
+        parser.print_lexemes()
         parser.create_parse_tree()
-        if len(sys.argv) == 3:          # read expression from file
+        if len(sys.argv) == 3:          # output file
             parser.print_tree(sys.argv[2])
 
 def interactive_mode():
@@ -31,15 +32,12 @@ def interactive_mode():
             break
         elif new_line == 'help':
             print('- commands:')
-            print('-- \'reduce\'                    see reduction steps')
-            print('-- \'output [file_name].tex\'    create ouput latex file (must have qtree.sty)')
+            print('-- \'output [file_name].tex\'    ouput tree representation of last reduction')
             print('-- \'exit\'                      quit')
             print('- lamda symbols can be either λ or \\')
-        elif new_line == 'reduce':
-            print('reduce')
         elif new_line[0:6] == 'output':
             if len(parser.lexemes) == 0:
-                print('Error: no expression entered')
+                print('ERROR: no expression entered yet')
             else:
                 parser.print_tree(new_line[7:])
         else:
