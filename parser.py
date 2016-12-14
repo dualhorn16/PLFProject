@@ -113,7 +113,7 @@ class Parser(object):
         # check for syntax errors
         self.errors = 0
         self.check_syntax_errors()
-        if len(self.lexemes) == 0:
+        if self.errors != 0:
             return
         # add missing parentheses to lexemes
         # self.add_parentheses()
@@ -166,7 +166,6 @@ class Parser(object):
         '''
         Checks for syntax errors in input
         '''
-        print('checking syntax errors')
         cur_lex = 0
         while cur_lex < len(self.lexemes):
             # check for out of place period
@@ -187,21 +186,32 @@ class Parser(object):
                 if self.lexemes[cur_lex].lex_type != LexemeTypes.PERIOD:
                     self.print_syntax_error(cur_lex, 1, 'missing period after lamda')
             cur_lex += 1
-        # todo: check parnetheses
-        num = 0
-        for i in range(0, len(self.lexemes)):
-            if self.lexemes[i].lex_type == LexemeTypes.LEFT_PAREN:
-                num += 1
-            elif self.lexemes[i].lex_type == LexemeTypes.RIGHT_PAREN:
-                num -= 1
-        if num != 0:
-            print('ERROR: missing at least 1 parenthesis')
-            self.clear_lexemes()
+        # find first parenthesis if there is one and check the whole expression
+        self.check_parentheses()
         # if there errors present, clear lexemes. this is relied on in parse()
         if self.errors > 0:
             self.clear_lexemes()
             if self.errors > 10:
                 print((self.errors - 10), 'additional errors\n')
+
+    def check_parentheses(self):
+        '''
+        Checks for parentheses balance
+        '''
+        parentheses_stack = []
+        for i in range(0, len(self.lexemes)):
+            # push left_paren position onto stack
+            if self.lexemes[i].lex_type == LexemeTypes.LEFT_PAREN:
+                parentheses_stack.append(i)
+            # check that right_paren corresponds with a left_paren
+            elif self.lexemes[i].lex_type == LexemeTypes.RIGHT_PAREN:
+                if len(parentheses_stack) == 0:
+                    self.print_syntax_error(i, 1, 'no corresponding parenthesis')
+                else:
+                    parentheses_stack.pop()
+        # check for remaining parentheses in stack
+        for i in range(0, len(parentheses_stack)):
+            self.print_syntax_error(parentheses_stack[i], 1, 'no corresponding parenthesis')
 
     def print_syntax_error(self, position, length, message):
         '''
@@ -214,9 +224,8 @@ class Parser(object):
             print('\t' + self.raw_string)
             # define error message and print it
             error_pos = ' ' * position
-            for i in range(position, position + length):
-                error_pos += '^'
-            print('\t' + error_pos)
+            carrots = '^' * length
+            print('\t' + error_pos + carrots)
 
     def add_parentheses(self):
         '''
