@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+#************************************************
+#   Lamda Calculus Beta Redux Calculator
+#   
+#   Programming Language Foundations
+#
+#   Kiel Martyn
+#   Dustin Horner
+#   
+#   -Fall 2016
+#
+#   -Tools main method is located here, handles CLI inputs,
+#    creates parser, and reductions called from here.
+#***********************************************/
 from __future__ import print_function
 import sys
 from parser import Parser

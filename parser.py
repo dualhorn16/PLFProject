@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+#************************************************
+#   Lamda Calculus Beta Redux Calculator
+#   
+#   Programming Language Foundations
+#
+#   Kiel Martyn
+#   Dustin Horner
+#   
+#   -Fall 2016
+#
+#   -Purpose is to provide parsing of lamda calculus expresssions,
+#   and create the AST's used by tree.py.
+#***********************************************/
 from __future__ import print_function
 import codecs
 
