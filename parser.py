@@ -352,3 +352,17 @@ class Parser(object):
         Re-initialize lexemes container to clear it
         '''
         self.lexemes = []
+
+    def return_root(self):
+        '''
+        Helper function in order to pass back the root field of parser object
+        '''
+        return self.root
+
+    def set_root(root):
+        '''
+        Helper function in order to set a different tree in root field within parser
+        '''
+        self.root = root
+        return
+

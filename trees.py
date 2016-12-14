@@ -98,26 +98,6 @@ class Tree:
             return node
         node.left = self.insert(node.left, node_type, value)
         node.right = self.insert(node.right, node_type, value)
-    
-
-    def insertLeft(self , node , node_type, value):
-        '''
-        Only wrote these next two functions to manually place data in tree w/out having to parse.
-        ''' 
-        if node is None:
-            return self.createNode(node_type, value)
-        if node.left == None:
-            node.left = self.insertLeft(node.left, node_type, value)
-
-    def insertRight(self , node , node_type, value):
-        '''
-        Only wrote these next two functions to manually place data in tree w/out haveing to parse.
-        '''
-        if node is None:
-            return self.createNode(node_type, value)
-        if node.right == None:
-            node.right = self.insertRight(node.right, node_type, value)
-
 
     def beta_redux_present(self, node, prev_value):
         '''
@@ -173,6 +153,37 @@ class Tree:
         else:
             return max(self.height(root.left), self.height(root.right)) + 1
 
+    def is_evaluatable(self, node, prev_value):
+        '''
+        function to return true if tree only has variables, and can be arithmetically evaluatable 
+        '''
+        return_value = prev_value
+        if node is not None:
+            if node.node_type != NodeTypes.VARIABLE:
+                return_value = False
+            return_value = self.is_evaluatable(node.left, return_value)
+            return_value = self.is_evaluatable(node.right, return_value) 
+        return return_value
+
+    def evaluate(self, node, string, count):
+        '''
+        if we have an arithmetic expression as final tree this func evaluates that
+        '''
+        #print('this is count: ', count)
+        if node is not None and node.left is not None:
+            if count % 3 == 1:
+                string += '('
+
+        if node is not None:
+            string = self.evaluate(node.left, string, count)
+            string = string + str(node.value)
+            count += 1
+            
+            if count % 3 == 0:
+                string += ')'
+
+            string = self.evaluate(node.right, string, count)
+        return string
 
     def traverseInorder(self, root):
         '''
@@ -204,35 +215,22 @@ class Tree:
             self.traversePreorder(root.right)
             print root.data
 
-    def printNice(self, rootnode, height):
-        thislevel = [rootnode]
-        level = 1
-        a = "                                "
-        a2 = "================"
-        while thislevel:
-            nextlevel = list()
-            nextlevel2 = list()
-            a = a[:len(a)/2]
-            for n in thislevel:
-                if level is 1:
-                    print a[:len(a)-3]+n.to_string(),
-                else:
-                    print a+n.to_string(),
-                if n.left: nextlevel.append(n.left),nextlevel2.append("/") 
-                if not n.left and level < height: nextlevel.append(Node(NodeTypes.VARIABLE, a[:(len(a)/4)])),nextlevel2.append(a[:(len(a)/4)])
-                if n.right: nextlevel.append(n.right),nextlevel2.append("\\")
-                if not n.right and level < height: nextlevel.append(Node(NodeTypes.VARIABLE, a[:(len(a)/4)])),nextlevel2.append(a[:(len(a)/4)])
-            print
-            for m in nextlevel2:
-                if m is "/":
-                    print a[:(len(a)/2)] + m,
-                elif m is "\\":
-                    print a[:(len(a)/2)-1] + m,
-                else:
-                    print a[:(len(a)/2)] + m,
-            print
-            level=level+1
-            thislevel = nextlevel
+    def create_test_tree(self):
+        root = None
+        root = self.insert(root,NodeTypes.APPLICATION, None)
+        root.left = Node(NodeTypes.ABSTRACTION, None)
+        root.right = Node(NodeTypes.APPLICATION, None)
+        root.left.left = Node(NodeTypes.VARIABLE,"x")
+        root.left.right = Node(NodeTypes.VARIABLE,"+")
+        root.left.right.left = Node(NodeTypes.VARIABLE,"x")
+        root.left.right.right = Node(NodeTypes.VARIABLE,"1")
+        root.right.left = Node(NodeTypes.ABSTRACTION, None)
+        root.right.right = Node(NodeTypes.VARIABLE,"3")
+        root.right.left.left = Node(NodeTypes.VARIABLE,"y")
+        root.right.left.right = Node(NodeTypes.VARIABLE,"+")
+        root.right.left.right.left = Node(NodeTypes.VARIABLE,"y")
+        root.right.left.right.right = Node(NodeTypes.VARIABLE,"2")
+        return root
 
     def print_tree(self, filename, node, item):
         '''
@@ -254,6 +252,7 @@ class Tree:
             # begin file with headers
             output_file.write('\\documentclass[utf8]{article}\n')
             output_file.write('\\usepackage{qtree}\n')
+            output_file.write('\\usepackage[margin=0.5in]{geometry}')
             output_file.write('\\begin{document}\n')
             output_file.write('\\textbf{Reduction Sequence:}\n')
             output_file.write('\\begin{enumerate}\n')
@@ -265,11 +264,20 @@ class Tree:
         output_file.write('\\Tree ')
         # Traverse tree here
         self.print_tree_rec(output_file, node, 1)
-        # complete file
+    
         output_file.write('\n')
         output_file.write('\hskip 0.3in')
         output_file.close()
         return
+
+    def finish_print_nice(self, filename):
+        '''
+        function to close out the LaTeX and QTree file after all reductions are performed
+        '''
+        output_file = codecs.open(filename, encoding='utf-8', mode='a')
+        output_file.write('\end{enumerate}\n')
+        output_file.write('\n\n\\end{document}\n')
+        output_file.close()
             
 
     def print_tree_rec(self, output_file, node, level):
