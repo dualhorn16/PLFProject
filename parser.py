@@ -69,8 +69,9 @@ class Node(object):
     node_type = None
     value = 0
 
-    def __init__(self, node_type):
+    def __init__(self, node_type, value):
         self.node_type = node_type
+        self.value = value
 
     def to_string(self):
         '''
@@ -93,6 +94,7 @@ class Parser(object):
     '''
     raw_string = ''
     lexemes = []
+    postfix_expression = []
     root = 0
     errors = 0
 
@@ -362,61 +364,98 @@ class Parser(object):
         '''
         Initiates the creation of parse tree.
         '''
-        # create tree
-        # self.root = self.parse_expression(self.lexemes, None)
+        # check if lexemes are empty
+        if len(self.lexemes) == 0:
+            return None
+        # create tree with stack approach
+        self.root = self.parse_with_stack()
 
-    def parse_expression(self, expression, parent):
+    def parse_with_stack(self):
         '''
-        Recursively parses an expression. Takes array of lexemes. Returns root node.
+        Parses the expression with the Shunting Yard Algorithm
         '''
-        # iterate through lexemes
         cur_lex = 0
-        node = 0
-        # If abstraction
-        if expression[cur_lex].lex_type == LexemeTypes.LAMDA:
-            # Set node to lamda
-            node = Node(NodeTypes.ABSTRACTION)
-            node.parent = parent
-            cur_lex += 1
-            # put variable as left child
-            node.left = Node(NodeTypes.VARIABLE)
-            node.left.value = expression[cur_lex].value
-            node.left.parent = node
-            cur_lex += 1
-            # Skip period
-            cur_lex += 1
-            # put the rest as right child
-            node.right = self.parse_expression(expression[cur_lex:], node)
-        # If variable
-        elif expression[cur_lex].lex_type == LexemeTypes.IDENTIFIER:
-            # if parent is a variable, then add an application
-            if parent.node_type == NodeTypes.VARIABLE:
-                # switch new application node with parent
-                node = Node(NodeTypes.APPLICATION)
-                node.left = parent
-                node.parent = parent.parent
-                parent.parent = node
-                # set new variable as right
-                node.right = Node(NodeTypes.VARIABLE)
-                node.right.value = expression[cur_lex].value
-                node.right.parent = node
+        operator_stack = []
+        self.postfix_expression = []
+        # push values and operators onto stacks first
+        while cur_lex < len(self.lexemes):
+            # if variable
+            if self.lexemes[cur_lex].lex_type == LexemeTypes.IDENTIFIER:
+                # push value
+                value = self.lexemes[cur_lex].value
+                self.postfix_expression.append(Node(NodeTypes.VARIABLE, value))
+                # if next is also a variable, push that value onto stack
+                if self.lexemes[cur_lex + 1].lex_type == LexemeTypes.IDENTIFIER:
+                    cur_lex += 1
+                    value = self.lexemes[cur_lex].value
+                    self.postfix_expression.append(Node(NodeTypes.VARIABLE, value))
+                    operator_stack.append(Node(NodeTypes.APPLICATION, 0))
+                # if next is not a right paren, push operator
+                elif self.lexemes[cur_lex + 1].lex_type != LexemeTypes.RIGHT_PAREN:
+                    operator_stack.append(Node(NodeTypes.APPLICATION, 0))
+            # if left paren
+            elif self.lexemes[cur_lex].lex_type == LexemeTypes.LEFT_PAREN:
+                # push operator
+                operator_stack.append(self.lexemes[cur_lex])
+            # if right paren
+            elif self.lexemes[cur_lex].lex_type == LexemeTypes.RIGHT_PAREN:
+                # pop and print the stack until you find the left variable
+                for i in range(len(operator_stack) - 1, -1, -1):
+                    if type(operator_stack[i]) is Lexeme:
+                        if operator_stack[i].lex_type == LexemeTypes.LEFT_PAREN:
+                            operator_stack.pop()
+                            break
+                    self.postfix_expression.append(operator_stack.pop())
+                # if this isn't the last operator & next isn't a right paren, then add an application
+                if cur_lex < len(self.lexemes) - 1:
+                    if cur_lex + 1 < len(self.lexemes) - 1 and \
+                       self.lexemes[cur_lex].lex_type == LexemeTypes.RIGHT_PAREN:
+                        cur_lex += 1
+                        continue
+                    operator_stack.append(Node(NodeTypes.APPLICATION, 0))
+            # if lambda
+            elif self.lexemes[cur_lex].lex_type == LexemeTypes.LAMDA:
+                # push operator
+                operator_stack.append(Node(NodeTypes.ABSTRACTION, 0))
+                # push value
                 cur_lex += 1
-            # else it is  just a variable
-            else:
-                node = Node(NodeTypes.VARIABLE)
-                node.value = expression[cur_lex].value
-                node.parent = parent
+                value = self.lexemes[cur_lex].value
+                self.postfix_expression.append(Node(NodeTypes.VARIABLE, value))
+                # skip period
                 cur_lex += 1
-            # node = Node(NodeTypes.APPLICATION)
-            # node.parent = parent
-            # node.left = Node(NodeTypes.VARIABLE)
-            # node.left.value = expression[cur_lex].value
-            # node.left.parent = node
-            # cur_lex += 1
-            # node.right = Node(NodeTypes.VARIABLE)
-            # node.right.value = expression[cur_lex].value
-            # node.right.parent = node
-        return node
+            cur_lex += 1
+            # DEBUG
+            # print('DEBUG: postfix array:\n********************')
+            # for i in range(0, len(self.postfix_expression)):
+            #     print(self.postfix_expression[i].to_string(), end='')
+            # print('')
+            # print('DEBUG: op. stack:\n********************')
+            # for i in range(0, len(operator_stack)):
+            #     print(operator_stack[i].to_string(), end='')
+            # print('')
+        # DEBUG
+        # print('DEBUG: postfix array:\n********************')
+        # for i in range(0, len(self.postfix_expression)):
+        #     print(self.postfix_expression[i].to_string(), end='')
+        # print('')
+        # next create tree by popping through postfix_expression
+        return self.parse_recurse()
+
+    def parse_recurse(self):
+        '''
+        Recursive function to help create parse tree from postfix notation
+        '''
+        # get next operator
+        next_val = self.postfix_expression.pop()
+        # if its a variable, just return it
+        if next_val.node_type == NodeTypes.VARIABLE:
+            return next_val
+        # otherwise its an application or abstraction, they have the same structure
+        # next is right child
+        next_val.right = self.parse_recurse()
+        # next after that is left child
+        next_val.left = self.parse_recurse()
+        return next_val
 
     def print_lexemes(self):
         '''
@@ -482,7 +521,7 @@ class Parser(object):
         '''
         return self.root
 
-    def set_root(root):
+    def set_root(self, root):
         '''
         Helper function in order to set a different tree in root field within parser
         '''

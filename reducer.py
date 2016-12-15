@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #************************************************
 #   Lamda Calculus Beta Redux Calculator
-#   
+#
 #   Programming Language Foundations
 #
 #   Kiel Martyn
 #   Dustin Horner
-#   
+#
 #   -Fall 2016
 #
 #   -Tools main method is located here, handles CLI inputs,
@@ -32,13 +32,14 @@ def main():
         parser.parse_file(sys.argv[1])
         parser.print_lexemes()
         parser.create_parse_tree()
-
+        # if len(sys.argv) == 3:          # output file
+        #     parser.print_tree(sys.argv[2])
         root = parser.return_root()
         if len(sys.argv) == 2:
             reduce(root, None)
 
         if len(sys.argv) == 3:
-            reduce(root, sys.argv[2])          
+            reduce(root, sys.argv[2])
 
 
 def interactive_mode():
@@ -82,17 +83,17 @@ def reduce(root, arg_filename):
         filename = str(arg_filename)
     item_number = 1
     tree = Tree()
-    
+
     #create more complicated example tree until parsing is in
     root = tree.create_test_tree()
-    
+
     if file_print:
         tree.print_tree(filename, root, item_number)
 
-    #[Console print expression HERE]    
+    #[Console print expression HERE]
 
     #loop to perform redux, print each step
-    while(1):
+    while True:
 
         item_number += 1
         if tree.beta_redux_present(root, False):
@@ -101,8 +102,8 @@ def reduce(root, arg_filename):
             if file_print:
                 tree.print_tree(filename, root, item_number)
         elif tree.is_evaluatable(root, True):
-            value = eval(tree.evaluate(root,'',1))
-            root = Node(NodeTypes.VARIABLE,str(value))
+            value = eval(tree.evaluate(root, '', 1))
+            root = Node(NodeTypes.VARIABLE, str(value))
             #[Console print expression HERE]
             if file_print:
                 tree.print_tree(filename, root, item_number)
@@ -110,8 +111,8 @@ def reduce(root, arg_filename):
         else:
             print('Done and not evaluatable!')
             break
-    
-    if file_print:    
+
+    if file_print:
         tree.finish_print_nice(filename)
 
 if __name__ == '__main__':
