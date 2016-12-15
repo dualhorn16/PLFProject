@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+#************************************************
+#   Lamda Calculus Beta Redux Calculator
+#   
+#   Programming Language Foundations
+#
+#   Kiel Martyn
+#   Dustin Horner
+#   
+#   -Fall 2016
+#
+#   -Purpose is to provide parsing of lamda calculus expresssions,
+#   and create the AST's used by tree.py.
+#***********************************************/
 from __future__ import print_function
 import codecs
 
@@ -462,3 +475,17 @@ class Parser(object):
         Re-initialize lexemes container to clear it
         '''
         self.lexemes = []
+
+    def return_root(self):
+        '''
+        Helper function in order to pass back the root field of parser object
+        '''
+        return self.root
+
+    def set_root(root):
+        '''
+        Helper function in order to set a different tree in root field within parser
+        '''
+        self.root = root
+        return
+
