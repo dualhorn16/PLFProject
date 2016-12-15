@@ -79,9 +79,10 @@ class Tree:
     '''
     A generic representation of a tree to use after parsing Lamda Calc Expression.
     '''
+    recurse_num = 0
+
     def createNode(self, node_type, value):
         return Node(node_type, value)
-    
 
     def insert(self, node , node_type, value):
         '''
@@ -101,7 +102,7 @@ class Tree:
 
     def beta_redux_present(self, node, prev_value):
         '''
-        This function is called with arguements of (root_node, False) to test ... 
+        This function is called with arguements of (root_node, False) to test ...
         ...if any part of the entire tree contains a beta redux.
         '''
         return_value = prev_value
@@ -109,9 +110,8 @@ class Tree:
             if node.node_type == NodeTypes.APPLICATION and node.left.node_type == NodeTypes.ABSTRACTION:
                 return_value = True
             return_value = self.beta_redux_present(node.left, return_value)
-            return_value = self.beta_redux_present(node.right, return_value) 
+            return_value = self.beta_redux_present(node.right, return_value)
         return return_value
-
 
     def replacement(self, node, identifier, arguement):
         '''
@@ -123,9 +123,9 @@ class Tree:
             return arguement
         node.left = self.replacement(node.left, identifier, arguement)
         node.right = self.replacement(node.right, identifier, arguement)
-        
+        # self.recurse_num += 1
+        # print(self.recurse_num)
         return node
-
 
     def perform_beta_redux(self, node):
         '''
@@ -138,12 +138,14 @@ class Tree:
                 arguement = copy.deepcopy(node.right)
                 node = self.replacement(node.left.right, identifier, arguement)
             else:
-                node.left = self.perform_beta_redux(node.left)
-                node.right = self.perform_beta_redux(node.right)
-
+                if self.beta_redux_present(node.left, False):
+                    node.left = self.perform_beta_redux(node.left)
+                else:
+                    node.right = self.perform_beta_redux(node.right)
+        # self.recurse_num += 1
+        # print(self.recurse_num)
         return node
 
-    
     def height(self, root):
         '''
         Returns the height of a tree/subtree from ROOT.  Used to get height for printNice() arguement.
@@ -232,43 +234,47 @@ class Tree:
         root.right.left.right.right = Node(NodeTypes.VARIABLE,"2")
         return root
 
+    def print_header(self, filename, item):
+        try:
+            output_file = codecs.open(filename, encoding='utf-8', mode='w')
+        except IOError:
+            print('cannot write to file:', filename)
+            return
+        # begin file with headers
+        output_file.write('\\documentclass[utf8]{article}\n')
+        output_file.write('\\usepackage{qtree}\n')
+        output_file.write('\\usepackage[margin=0.5in]{geometry}')
+        output_file.write('\\begin{document}\n')
+        output_file.write('\\textbf{Reduction Sequence:}\n')
+        output_file.write('\\begin{enumerate}\n')
+        #output_file.write('\\qtreecenterfalse\n')
+        output_file.write('\\item[('+str(item)+')] ')
+        output_file.close()
+
     def print_tree(self, filename, node, item):
         '''
         Prints the parse tree using LaTex and QTree
         '''
-        if (os.path.exists(filename)):
-            try:
-                output_file = codecs.open(filename, encoding='utf-8', mode='a')
-            except IOError:
-                print('cannot write to file:', filename)
-                return
-
-        else:
-            try:
-                output_file = codecs.open(filename, encoding='utf-8', mode='w')
-            except IOError:
-                print('cannot write to file:', filename)
-                return
-            # begin file with headers
-            output_file.write('\\documentclass[utf8]{article}\n')
-            output_file.write('\\usepackage{qtree}\n')
-            output_file.write('\\usepackage[margin=0.5in]{geometry}')
-            output_file.write('\\begin{document}\n')
-            output_file.write('\\textbf{Reduction Sequence:}\n')
-            output_file.write('\\begin{enumerate}\n')
-            #output_file.write('\\qtreecenterfalse\n')
-            output_file.write('\\item[('+str(item)+')] ')
-
-        character = chr(96 + item)
+        output_file = codecs.open(filename, encoding='utf-8', mode='a')
+        character = chr((96 + item) % 128 )
         output_file.write(character + '. ')
         output_file.write('\\Tree ')
         # Traverse tree here
         self.print_tree_rec(output_file, node, 1)
-    
+
         output_file.write('\n')
         output_file.write('\hskip 0.3in')
         output_file.close()
         return
+
+    def finish_print_nice(self, filename):
+        '''
+        function to close out the LaTeX and QTree file after all reductions are performed
+        '''
+        output_file = codecs.open(filename, encoding='utf-8', mode='a')
+        output_file.write('\end{enumerate}\n')
+        output_file.write('\n\n\\end{document}\n')
+        output_file.close()
 
     def print_flat_tree(self, node, tree_string):
         '''
@@ -307,16 +313,6 @@ class Tree:
         else:
             tree_string += node.value
         return tree_string
-
-    def finish_print_nice(self, filename):
-        '''
-        function to close out the LaTeX and QTree file after all reductions are performed
-        '''
-        output_file = codecs.open(filename, encoding='utf-8', mode='a')
-        output_file.write('\end{enumerate}\n')
-        output_file.write('\n\n\\end{document}\n')
-        output_file.close()
-            
 
     def print_tree_rec(self, output_file, node, level):
         '''

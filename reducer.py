@@ -31,10 +31,12 @@ def main():
     else:
         parser = Parser()               # read expression from file
         parser.parse_file(sys.argv[1])
+        if len(parser.lexemes) == 0:
+            exit()
         parser.print_lexemes()
         parser.create_parse_tree()
-        if len(sys.argv) == 3:          # output file
-            parser.print_tree(sys.argv[2])
+        # if len(sys.argv) == 3:          # output file
+        #     parser.print_tree(sys.argv[2])
         root = parser.return_root()
         if len(sys.argv) == 2:
             reduce(parser, root, None)
@@ -66,6 +68,9 @@ def interactive_mode():
         else:
             parser.clear_lexemes()
             parser.parse_string(new_line)
+            parser.print_lexemes()
+            if len(parser.lexemes) == 0:
+                continue
             parser.create_parse_tree()
             root = parser.return_root()
             reduce(parser, root, None)
@@ -80,37 +85,32 @@ def reduce(parser, root, arg_filename):
     tree = Tree()
 
     #create more complicated example tree until parsing is in
-    root = tree.create_test_tree()
+    # root = tree.create_test_tree()
 
     if file_print:
+        tree.print_header(filename, item_number)
         tree.print_tree(filename, root, item_number)
 
     #[Console print expression HERE]
     flat_tree = u''
     flat_tree = tree.print_flat_tree(root, flat_tree)
-    print(flat_tree)
+    print(flat_tree, end='')
 
     #loop to perform redux, print each step
     while True:
 
         item_number += 1
         if tree.beta_redux_present(root, False):
+            print(' ~>')
             root = tree.perform_beta_redux(root)
             #[Console print expression HERE]
-            flat_tree = ''
+            flat_tree = u''
             flat_tree = tree.print_flat_tree(root, flat_tree)
-            print(flat_tree)
+            print(flat_tree, end='')
             if file_print:
                 tree.print_tree(filename, root, item_number)
-        elif tree.is_evaluatable(root, True):
-            value = eval(tree.evaluate(root, '', 1))
-            root = Node(NodeTypes.VARIABLE, str(value))
-            # parser.print_lexemes()
-            if file_print:
-                tree.print_tree(filename, root, item_number)
-            break
         else:
-            print('Done and not evaluatable!')
+            print('')
             break
 
     if file_print:
