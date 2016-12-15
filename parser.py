@@ -406,12 +406,9 @@ class Parser(object):
                             operator_stack.pop()
                             break
                     self.postfix_expression.append(operator_stack.pop())
-                # if this isn't the last operator & next isn't a right paren, then add an application
-                if cur_lex < len(self.lexemes) - 1:
-                    if cur_lex + 1 < len(self.lexemes) - 1 and \
-                       self.lexemes[cur_lex].lex_type == LexemeTypes.RIGHT_PAREN:
-                        cur_lex += 1
-                        continue
+                # if this isn't the last op & next isn't a right paren, then add an application
+                if cur_lex < len(self.lexemes) - 1 and \
+                   self.lexemes[cur_lex + 1].lex_type != LexemeTypes.RIGHT_PAREN:
                     operator_stack.append(Node(NodeTypes.APPLICATION, 0))
             # if lambda
             elif self.lexemes[cur_lex].lex_type == LexemeTypes.LAMDA:
@@ -432,12 +429,12 @@ class Parser(object):
             # print('DEBUG: op. stack:\n********************')
             # for i in range(0, len(operator_stack)):
             #     print(operator_stack[i].to_string(), end='')
-            # print('')
+            # print('\n********************')
         # DEBUG
-        # print('DEBUG: postfix array:\n********************')
-        # for i in range(0, len(self.postfix_expression)):
-        #     print(self.postfix_expression[i].to_string(), end='')
-        # print('')
+        print('DEBUG: postfix array:\n********************')
+        for i in range(0, len(self.postfix_expression)):
+            print(self.postfix_expression[i].to_string(), end='')
+        print('')
         # next create tree by popping through postfix_expression
         return self.parse_recurse()
 
@@ -447,6 +444,7 @@ class Parser(object):
         '''
         # get next operator
         next_val = self.postfix_expression.pop()
+        # print('next val:', next_val.to_string())
         # if its a variable, just return it
         if next_val.node_type == NodeTypes.VARIABLE:
             return next_val
