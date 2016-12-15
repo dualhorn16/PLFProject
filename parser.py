@@ -431,10 +431,10 @@ class Parser(object):
             #     print(operator_stack[i].to_string(), end='')
             # print('\n********************')
         # DEBUG
-        print('DEBUG: postfix array:\n********************')
-        for i in range(0, len(self.postfix_expression)):
-            print(self.postfix_expression[i].to_string(), end='')
-        print('')
+        # print('DEBUG: postfix array:\n********************')
+        # for i in range(0, len(self.postfix_expression)):
+        #     print(self.postfix_expression[i].to_string(), end='')
+        # print('')
         # next create tree by popping through postfix_expression
         return self.parse_recurse()
 

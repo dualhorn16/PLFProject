@@ -270,6 +270,44 @@ class Tree:
         output_file.close()
         return
 
+    def print_flat_tree(self, node, tree_string):
+        '''
+        Creates string rep. of tree. Needs empty string for initial call.
+        '''
+        # lamda
+        if node.node_type == NodeTypes.ABSTRACTION:
+            tree_string += '('
+            tree_string += u'λ'
+            tree_string += node.left.value
+            tree_string += '.'
+            if node.right.node_type == NodeTypes.VARIABLE:
+                tree_string += node.left.value
+            else:
+                tree_string = self.print_flat_tree(node.right, tree_string)
+            tree_string += ')'
+        # application
+        elif node.node_type == NodeTypes.APPLICATION:
+            if node.right.node_type == NodeTypes.VARIABLE and \
+               node.right.node_type == NodeTypes.VARIABLE:
+                tree_string += '('
+                tree_string = self.print_flat_tree(node.left, tree_string)
+                tree_string = self.print_flat_tree(node.right, tree_string)
+                tree_string += ')'
+            else:
+                tree_string += '('
+                if self.height(node.left) != 1:
+                    tree_string += '('
+                    tree_string = self.print_flat_tree(node.left, tree_string)
+                    tree_string += ')'
+                else:
+                    tree_string = self.print_flat_tree(node.left, tree_string)
+                tree_string = self.print_flat_tree(node.right, tree_string)
+                tree_string += ')'
+        # variable
+        else:
+            tree_string += node.value
+        return tree_string
+
     def finish_print_nice(self, filename):
         '''
         function to close out the LaTeX and QTree file after all reductions are performed
