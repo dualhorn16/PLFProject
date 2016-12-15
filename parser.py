@@ -116,7 +116,9 @@ class Parser(object):
         if self.errors != 0:
             return
         # add missing parentheses to lexemes
-        # self.add_parentheses()
+        self.add_parentheses()
+        # second pass for missed situation of )(
+        self.add_parentheses()
 
     def lexical_analyzer(self):
         '''
@@ -229,20 +231,119 @@ class Parser(object):
 
     def add_parentheses(self):
         '''
-        Fully parentheses the expressions
+        Fully parenthesize the expression. Parentheses only surround 2 exprs. (i.e. an applicaiton)
         '''
-        print('adding parentheses')
-        # if parenthesis is missing at beginning, add
-        if self.lexemes[0] != '(':
-            print('( here')
+        cur_lex = 0
+        while cur_lex < len(self.lexemes):
+            # if abstraction, then insert before lamda and before 1st free stand right paren
+            if self.lexemes[cur_lex].lex_type == LexemeTypes.LAMDA:
+                right_paren_pos = self.find_abstraction_end(cur_lex)
+                self.add_parens_if_missing(cur_lex, right_paren_pos)
+            # if variable and there is at least another lexeme
+            elif self.lexemes[cur_lex].lex_type == LexemeTypes.IDENTIFIER and \
+                 cur_lex + 1 < len(self.lexemes):
+                # if next is another variable and they're not surrounded, then do so
+                if self.lexemes[cur_lex + 1].lex_type == LexemeTypes.IDENTIFIER:
+                    self.add_parens_if_missing(cur_lex, cur_lex + 1)
+                # if next is left paren
+                elif self.lexemes[cur_lex + 1].lex_type == LexemeTypes.LEFT_PAREN:
+                    # check if they are already surrounded
+                    right_paren_pos = self.find_right_paren(cur_lex + 1)
+                    self.add_parens_if_missing(cur_lex, right_paren_pos)
+                # if next is lamda, if not surrounded, then do so
+                elif self.lexemes[cur_lex + 1].lex_type == LexemeTypes.LAMDA:
+                    # need to find the end of the abstraction (1st free standing right parentheses)
+                    right_paren_pos = self.find_abstraction_end(cur_lex)
+                    self.add_parens_if_missing(cur_lex, right_paren_pos)
+            # if right parenthesis
+            elif self.lexemes[cur_lex].lex_type == LexemeTypes.RIGHT_PAREN and \
+                 cur_lex + 1 < len(self.lexemes):
+                # if the next is a variable, check for parenthesis
+                if self.lexemes[cur_lex + 1].lex_type == LexemeTypes.IDENTIFIER:
+                    left_paren_pos = self.find_left_paren(cur_lex)
+                    self.add_parens_if_missing(left_paren_pos, cur_lex + 1)
+                # if the next is a left_paren, check for parenthesis around both
+                elif self.lexemes[cur_lex + 1].lex_type == LexemeTypes.LEFT_PAREN:
+                    left_paren_pos = self.find_left_paren(cur_lex)
+                    right_paren_pos = self.find_right_paren(cur_lex + 1)
+                    self.add_parens_if_missing(left_paren_pos, right_paren_pos)
+            cur_lex += 1
 
-    def add_parentheses_rec(self, position):
+    def add_parens_if_missing(self, start, end):
         '''
-        Recursive function for add_parentheses()
+        Actually adds parentheses
         '''
-        # if
-        print('parentheses recurse')
+        # check for exising parentheses already around start and end
+        if start - 1 >= 0 and \
+           end + 1 < len(self.lexemes) and \
+           self.lexemes[start - 1].lex_type == LexemeTypes.LEFT_PAREN and \
+           self.lexemes[end + 1].lex_type == LexemeTypes.RIGHT_PAREN:
+            return
+        # add parentheses
+        self.lexemes.insert(start, Lexeme(LexemeTypes.LEFT_PAREN, 0))
+        if end + 2 >= len(self.lexemes):
+            self.lexemes.append(Lexeme(LexemeTypes.RIGHT_PAREN, 0))
+        else:
+            self.lexemes.insert(end + 2, Lexeme(LexemeTypes.RIGHT_PAREN, 0))
+        return
 
+    def find_left_paren(self, start):
+        '''
+        Finds position of corresponding left parenthesis
+        '''
+        parentheses_stack = []
+        for i in range(start, -1, -1):
+            # push right_paren position onto stack
+            if self.lexemes[i].lex_type == LexemeTypes.RIGHT_PAREN:
+                parentheses_stack.append(i)
+            # if left_paren, pop right_paren or if nothing is left return the position
+            elif self.lexemes[i].lex_type == LexemeTypes.LEFT_PAREN:
+                if len(parentheses_stack) == 1:
+                    return i
+                else:
+                    parentheses_stack.pop()
+        # return error if couldn't find corresponding left paren
+        return -1
+
+    def find_right_paren(self, start):
+        '''
+        Finds position of corresponding right parenthesis
+        '''
+        parentheses_stack = []
+        for i in range(start, len(self.lexemes)):
+            # push left_paren position onto stack
+            if self.lexemes[i].lex_type == LexemeTypes.LEFT_PAREN:
+                parentheses_stack.append(i)
+            # if right_paren, pop left_paren or if nothing is right return the position
+            elif self.lexemes[i].lex_type == LexemeTypes.RIGHT_PAREN:
+                if len(parentheses_stack) == 1:
+                    return i
+                else:
+                    parentheses_stack.pop()
+        # return error if couldn't find corresponding left paren
+        return -1
+
+    def find_abstraction_end(self, start):
+        '''
+        Finds the end of an abstraction. Only situation is when there is a right paren
+        '''
+        parentheses_stack = []
+        return_val = -1
+        for i in range(start, len(self.lexemes)):
+            # push left_paren position onto stack
+            if self.lexemes[i].lex_type == LexemeTypes.LEFT_PAREN:
+                parentheses_stack.append(i)
+            # if right_paren, pop left_paren or if nothing is left return the position
+            elif self.lexemes[i].lex_type == LexemeTypes.RIGHT_PAREN:
+                if len(parentheses_stack) == 0:
+                    return_val = i - 1
+                    break
+                else:
+                    parentheses_stack.pop()
+        # return length of lexemes array if there is no inferable end
+        if return_val == -1:
+            return_val = len(self.lexemes) - 1
+        return return_val
 
     def create_parse_tree(self):
         '''
